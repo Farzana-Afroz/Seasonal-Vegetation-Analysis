@@ -6,7 +6,7 @@ library(tidyr)
 library(lubridate)
 
 # Set the file path name to your computer
-VegDRI_path <- "C:/Users/fafroz/Downloads/SGP_VD_Analysis_april09Aug24/Data-SGPVD_April09Aug24"
+VegDRI_path <- "file-path"
 # Provide a list of all the VegDRI tif files
 all_VegDRI <- list.files(VegDRI_path,
                          full.names = TRUE,
@@ -43,7 +43,6 @@ file_df <- data.frame(
   file = all_VegDRI[matching_files],
   date = dates
 )
-
 
 #################################
 
@@ -146,8 +145,7 @@ ggplot(seasonal_averages_df, aes(x = x, y = y, fill = value)) +
   )
 
 
-#################################### Code for -Trend Analysis #####################
-
+################### Code for -Trend Analysis #####################
 
 ##############  Summarize the pixel-level data to get a mean value for each year and season
 
