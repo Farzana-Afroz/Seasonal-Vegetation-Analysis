@@ -5,20 +5,14 @@ library(ggplot2)
 library(tidyr)
 library(lubridate)
 
-# Set the filepath name to your computer
+# Set the file path name to your computer
 VegDRI_path <- "C:/Users/fafroz/Downloads/SGP_VD_Analysis_april09Aug24/Data-SGPVD_April09Aug24"
 # Provide a list of all the VegDRI tif files
 all_VegDRI <- list.files(VegDRI_path,
                          full.names = TRUE,
                          pattern = ".tif$")
 
-
-
-###################################
-
-##################################fix with-files-date-format-issues#######################################
-
-
+########### fix with-files-date-format-issues##############
 
 # Extract the date from the file names that match the expected pattern
 
@@ -37,8 +31,7 @@ if (length(non_matching_files) > 0) {
   print(non_matching_files)
 }
 
-
-#########################.....working with only matching files....
+########### working with only matching files ##########
 
 length(all_VegDRI)
 length(dates)
@@ -84,8 +77,6 @@ library(terra)
 # Initialize an empty list to store seasonal averages
 seasonal_averages <- list()
 
-
-
 ### Loop through each combination of year and season
 
 for (i in 1:nrow(seasonal_data)) {
@@ -103,13 +94,11 @@ for (i in 1:nrow(seasonal_data)) {
   seasonal_averages[[paste(year, season, sep = "_")]] <- seasonal_mean
 }
 
-
-
 # Convert seasonal_averages to DataFrames
-# Initialize an empty list to store dataframes
+# Initialize an empty list to store data frames
 df_list <- list()
 
-# Convert each raster to a dataframe and add year, season columns
+# Convert each raster to a data frame and add year, season columns
 for (key in names(seasonal_averages)) {
   # Extract year and season from the key
   year_season <- strsplit(key, "_")[[1]]
@@ -130,12 +119,12 @@ for (key in names(seasonal_averages)) {
 
 
 
-# Combine all dataframes into one
+# Combine all data frames into one
 seasonal_averages_df <- bind_rows(df_list)
 
-####################################################    Visualization  #########################
+############### Data Visualization #############
 
-############################## Spatial analysis- Plotting the Grid of Maps############
+########## Spatial analysis- Plotting the Grid of Maps ############
 
 ggplot(seasonal_averages_df, aes(x = x, y = y, fill = value)) +
   geom_raster() +
@@ -166,7 +155,7 @@ seasonal_trend <- seasonal_averages_df %>%
   group_by(year, season) %>%
   summarise(mean_value = mean(value, na.rm = TRUE), .groups = 'drop')
 
-############### Now plot the summarized data with Trend line
+############### Now plot the summarized data with the Trend line
 
 # Create a line plot to visualize the trend over time with all years included on the x-axis
 ggplot(seasonal_trend, aes(x = as.numeric(year), y = mean_value, color = season, group = season)) +
@@ -190,7 +179,6 @@ ggplot(seasonal_trend, aes(x = as.numeric(year), y = mean_value, color = season,
   )
 
 
-
 #### Histogram Plot
 ggplot(seasonal_averages_df) +
   geom_histogram(aes(value), bins = 30, fill = "green", color = "black") +
@@ -198,7 +186,7 @@ ggplot(seasonal_averages_df) +
   theme_minimal() +
   ggtitle("Frequency of Average Seasonal VegDRI")
 
-########################### Box-plot################
+########################### Box-plot ################
 
 seasonal_averages_df$season <- factor(seasonal_averages_df$season, levels = c("Winter", "Spring", "Summer", "Fall"))
 
@@ -209,9 +197,6 @@ ggplot(seasonal_averages_df, aes(x = season, y = value, fill = as.factor(year)))
        x = "Season",
        y = "VegDRI Value") +
   theme_minimal()
-
-
-
 
 ##################### Heatmap of VegDRI Values (not completed yet)
 
@@ -224,32 +209,3 @@ ggplot(seasonal_trend, aes(x = year, y = season, fill = mean_value)) +
        fill = "Mean VegDRI") +
   theme_minimal()
 
-######################## Correlation Between Seasons
-
-library(dplyr)
-library(tidyr)
-library(zoo)
-
-# Ensure year is numeric
-seasonal_trend$year <- as.numeric(seasonal_trend$year)
-
-# Step 1: Filter for Summer and Fall, reshape to wide format
-seasonal_trend_wide <- seasonal_trend %>%
-  filter(season %in% c("Summer", "Fall")) %>%
-  spread(season, mean_value) %>%
-  mutate(Summer = as.numeric(Summer),
-         Fall = as.numeric(Fall))
-
-# Step 2: Compute rolling correlation between Summer and Fall
-rolling_correlation <- rollapply(seasonal_trend_wide[, c("Summer", "Fall")], 
-                                 width = 5, 
-                                 FUN = function(x) cor(x[, "Summer"], x[, "Fall"], use = "complete.obs"), 
-                                 by.column = FALSE)
-
-# Step 3: Calculate rolling mean for the years to align with rolling correlation
-rolling_years <- rollapply(seasonal_trend_wide$year, width = 5, FUN = mean, by = 1)
-
-# Step 4: Plot the rolling correlation over time
-plot(rolling_years, rolling_correlation, type = "l", 
-     xlab = "Year", ylab = "Rolling Correlation", 
-     main = "Rolling Correlation Between Summer and Fall VegDRI")
